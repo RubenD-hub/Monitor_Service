@@ -8,26 +8,43 @@ volumes:
     vol-emqx-log:
       name: foo-emqx-log
 
-      
+
 services: 
 
-    emqx:
-        container_name: emqx
-        image: emqx/emqx:4.3.1
-        restart: always
-        ports:
-            - 18083:18083
-            - 8083:8083
+  mongo:
+    container_name: mongo
+    image: mongo:4.4.6
+    restart: always
+    environment: 
+      TZ: "America/Mexico_City"
+      MONGO_INITDB_ROOT_USERNAME: "devuser"
+      MONGO_INITDB_ROOT_PASSWORD: "devpassword"
+    volumes: 
+      - ./mongodata:/data/db
+    ports: 
+      - 27017:27017
 
-        volumes: 
-            - vol-emqx-data:/opt/emqx/data
-            - vol-emqx-etc:/opt/emqx/etc
-            - vol-emqx-log:/opt/emqx/log
+  emqx:
+    container_name: emqx
+    image: emqx/emqx:4.3.1
+    restart: always
+    ports:
+      - 18083:18083
+      - 8083:8083
 
+    volumes: 
+      - vol-emqx-data:/opt/emqx/data
+      - vol-emqx-etc:/opt/emqx/etc
+      - vol-emqx-log:/opt/emqx/log
 
-        environment: 
+    environment: 
             
-            EMQX_NAME: monitor-98
-            EMQX_HOST: 127.0.0.1
+      EMQX_NAME: monitor-98
+      EMQX_HOST: 127.0.0.1
+      TZ: "America/Mexico_City"
 
-            EMQX_LISTENER__TCP__EXTERNAL__MAX_CONNECTIONS: 1000
+      # Login --- Solo se modifican las credenciales la primera ves que se levanta el docker
+      EMQX_DASHBOARD__DEFAULT_USER__LOGIN: admin
+      EMQX_DASHBOARD__DEFAULT_USER__PASSWORD: "public"
+
+      EMQX_LISTENER__TCP__EXTERNAL__MAX_CONNECTIONS: 1000
