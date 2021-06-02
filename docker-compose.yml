@@ -30,12 +30,20 @@ services:
     restart: always
     ports:
       - 18083:18083
+      - 18084:18084
+      - 1883:1883
+      - 8883:8883
       - 8083:8083
+      - 8084:8083
+      - 8085:8081
 
     volumes: 
       - vol-emqx-data:/opt/emqx/data
       - vol-emqx-etc:/opt/emqx/etc
       - vol-emqx-log:/opt/emqx/log
+
+    links: 
+      - mongo
 
     environment: 
             
@@ -43,8 +51,47 @@ services:
       EMQX_HOST: 127.0.0.1
       TZ: "America/Mexico_City"
 
-      # Login --- Solo se modifican las credenciales la primera ves que se levanta el docker
+      # ___Default Dash Pass____
       EMQX_DASHBOARD__DEFAULT_USER__LOGIN: admin
       EMQX_DASHBOARD__DEFAULT_USER__PASSWORD: "public"
+
+
+      EMQX_ALLOW_ANONYMOUS: "false"   # Exige las credenciales para la coneccion con el socket
+
+      EMQX_NOMATCH: "deny"            # Control de los topicos para subscribe y publish
+
+      # ____Mongo connection____
+      EMQX_AUTH__MONGO__TYPE: single 
+      EMQX_AUTH__MONGO__SERVER: "mongo:27017"
+      EMQX_AUTH__MONGO__POOL: 8
+
+      # ____Server credentials
+      EMQX_AUTH__MONGO__LOGIN: "devuser"
+      EMQX_AUTH__MONGO__PASSWORD: "devpassword"
+      EMQX_AUTH__MONGO__AUTH_SOURCE: admin
+
+      # ____Database for credentials____
+      EMQX_AUTH__MONGO__DATABASE: "Monitor"                       
+      EMQX_AUTH__MONGO__AUTH_QUERY__COLLECTION: "emqxauthrules"   
+
+      # ____Superusers____
+      EMQX_AUTH__MONGO__SUPER_QUERY__COLLETION: "emqxauthrules"
+      EMQX_AUTH__MONGO__SUPER_QUERY__SUPER_FIELD: "is_superuser"  # Llave 
+      EMQX_AUTH__MONGO__SUPER_QUERY__SELECTOR: "username=%u"
+      EMQX_AUTH__MONGO__SUPER_QUERY: "off"
+
+      # ____Socket connection____
+      EMQX_AUTH__MONGO__AUTH_QUERY__PASSWORD_HASH: plain      # Encryption mode
+      EMQX_AUTH__MONGO__AUTH_QUERY__PASSWORD_FIELD: "password"
+      EMQX_AUTH__MONGO__SUPER_QUERY__SELECTOR: "username=%u"
+
+      # ____Enable ACL query____
+      #Access Control List
+      EMQX_AUTH__MONGO__ACL_QUERY: "on"
+      EMQX_AUTH__MONGO__ACL_QUERY__COLLECTION: "emqxauthrules"
+      EMQX_AUTH__MONGO__ACL_QUERY__SELECTOR: "username=%u"
+
+      # ____Loaded Plugins____
+      EMQX_LOADED_PLUGINS: "emqx_recon, emqx_retainer, emqx_management, emqx_dashboard, emqx_auth_mongo"
 
       EMQX_LISTENER__TCP__EXTERNAL__MAX_CONNECTIONS: 1000
