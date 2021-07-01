@@ -45,6 +45,9 @@ services:
     links: 
       - mongo
 
+    extra_hosts: 
+      - "localhost:192.168.1.68"
+
     environment: 
             
       EMQX_NAME: monitor-98
@@ -55,6 +58,7 @@ services:
       EMQX_DASHBOARD__DEFAULT_USER__LOGIN: admin
       EMQX_DASHBOARD__DEFAULT_USER__PASSWORD: "public"
 
+      # EMQX_MANAGEMENT__DEFAULT_APPLICATION__SECRET: "emqxsecret"
 
       EMQX_ALLOW_ANONYMOUS: "false"   # Exige las credenciales para la coneccion con el socket
 
