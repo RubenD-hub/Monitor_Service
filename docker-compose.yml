@@ -1,32 +1,34 @@
 version: "3.8"
-
-volumes:
-    vol-emqx-data:
-      name: foo-emqx-data
-    vol-emqx-etc:
-      name: foo-emqx-etc
-    vol-emqx-log:
-      name: foo-emqx-log
-
-
-services: 
+#
+#volumes:
+#  vol-emqx-data:
+#    name: foo-emqx-data
+#  vol-emqx-etc:
+#    name: foo-emqx-etc
+#  vol-emqx-log:
+#    name: foo-emqx-log
+#
+services:
 
   mongo:
     container_name: mongo
-    image: mongo:4.4.6
+    image: mongo:4.4
     restart: always
-    environment: 
+    environment:
       TZ: "America/Mexico_City"
       MONGO_INITDB_ROOT_USERNAME: "devuser"
       MONGO_INITDB_ROOT_PASSWORD: "devpassword"
-    volumes: 
+    volumes:
       - ./mongodata:/data/db
-    ports: 
+    ports:
       - 27017:27017
+
+
+    
 
   emqx:
     container_name: emqx
-    image: emqx/emqx:4.3.1
+    image: emqx/emqx:4.2.3
     restart: always
     ports:
       - 18083:18083
@@ -34,38 +36,44 @@ services:
       - 1883:1883
       - 8883:8883
       - 8083:8083
-      - 8084:8083
+      - 8084:8084
       - 8085:8081
 
-    volumes: 
-      - vol-emqx-data:/opt/emqx/data
-      - vol-emqx-etc:/opt/emqx/etc
-      - vol-emqx-log:/opt/emqx/log
+   # volumes:
+   #   - vol-emqx-data:/opt/emqx/data
+   #   - vol-emqx-etc:/opt/emqx/etc
+   #   - vol-emqx-log:/opt/emqx/log
+   # 
 
-    links: 
+    links:
       - mongo
 
     extra_hosts: 
       - "localhost:192.168.1.68"
 
+
     environment: 
-            
+      
       EMQX_NAME: monitor-98
       EMQX_HOST: 127.0.0.1
+
       TZ: "America/Mexico_City"
 
       # ___Default Dash Pass____
       EMQX_DASHBOARD__DEFAULT_USER__LOGIN: admin
       EMQX_DASHBOARD__DEFAULT_USER__PASSWORD: "public"
 
-      # EMQX_MANAGEMENT__DEFAULT_APPLICATION__SECRET: "emqxsecret"
+      # ___Default App Secret____
+      EMQX_MANAGEMENT__DEFAULT_APPLICATION__SECRET: "public" 
 
-      EMQX_ALLOW_ANONYMOUS: "false"   # Exige las credenciales para la coneccion con el socket
-
-      EMQX_NOMATCH: "deny"            # Control de los topicos para subscribe y publish
+      EMQX_ALLOW_ANONYMOUS: "false"     # Exige las credenciales para la coneccion con el socket
+      EMQX_NOMATCH: "deny"              # Control de los topicos para subscribe y publish
 
       # ____Mongo connection____
-      EMQX_AUTH__MONGO__TYPE: single 
+      EMQX_AUTH__MONGO__TYPE: single
+      EMQX_AUTH__MONGO__TOPOLOGY__POOL_SIZE: 1
+      EMQX_AUTH__MONGO__TOPOLOGY__MAX_OVERFLOW: 0
+
       EMQX_AUTH__MONGO__SERVER: "mongo:27017"
       EMQX_AUTH__MONGO__POOL: 8
 
@@ -75,19 +83,19 @@ services:
       EMQX_AUTH__MONGO__AUTH_SOURCE: admin
 
       # ____Database for credentials____
-      EMQX_AUTH__MONGO__DATABASE: "Monitor"                       
-      EMQX_AUTH__MONGO__AUTH_QUERY__COLLECTION: "emqxauthrules"   
+      EMQX_AUTH__MONGO__DATABASE: "Monitor"
+      EMQX_AUTH__MONGO__AUTH_QUERY__COLLECTION: "emqxauthrules"
 
       # ____Superusers____
-      EMQX_AUTH__MONGO__SUPER_QUERY__COLLETION: "emqxauthrules"
-      EMQX_AUTH__MONGO__SUPER_QUERY__SUPER_FIELD: "is_superuser"  # Llave 
+      EMQX_AUTH__MONGO__SUPER_QUERY__COLLECTION: "emqxauthrules"
+      EMQX_AUTH__MONGO__SUPER_QUERY__SUPER_FIELD: "is_superuser"
       EMQX_AUTH__MONGO__SUPER_QUERY__SELECTOR: "username=%u"
       EMQX_AUTH__MONGO__SUPER_QUERY: "off"
 
       # ____Socket connection____
-      EMQX_AUTH__MONGO__AUTH_QUERY__PASSWORD_HASH: plain      # Encryption mode
+      EMQX_AUTH__MONGO__AUTH_QUERY__PASSWORD_HASH: plain
       EMQX_AUTH__MONGO__AUTH_QUERY__PASSWORD_FIELD: "password"
-      EMQX_AUTH__MONGO__SUPER_QUERY__SELECTOR: "username=%u"
+      EMQX_AUTH__MONGO__AUTH_QUERY__SELECTOR: "username=%u"
 
       # ____Enable ACL query____
       #Access Control List
@@ -96,6 +104,7 @@ services:
       EMQX_AUTH__MONGO__ACL_QUERY__SELECTOR: "username=%u"
 
       # ____Loaded Plugins____
-      EMQX_LOADED_PLUGINS: "emqx_recon, emqx_retainer, emqx_management, emqx_dashboard, emqx_auth_mongo"
+      EMQX_LOADED_PLUGINS: "emqx_recon,emqx_retainer,emqx_management,emqx_dashboard,emqx_auth_mongo"
+
 
       EMQX_LISTENER__TCP__EXTERNAL__MAX_CONNECTIONS: 1000
