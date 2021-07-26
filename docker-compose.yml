@@ -1,30 +1,26 @@
 version: "3.8"
-#
-#volumes:
-#  vol-emqx-data:
-#    name: foo-emqx-data
-#  vol-emqx-etc:
-#    name: foo-emqx-etc
-#  vol-emqx-log:
-#    name: foo-emqx-log
-#
-services:
 
+volumes:
+  vol-emqx-data:
+    name: foo-emqx-data
+  #  vol-emqx-etc:
+  #    name: foo-emqx-etc
+  vol-emqx-log:
+    name: foo-emqx-log
+
+services:
   mongo:
     container_name: mongo
     image: mongo:4.4
     restart: always
     environment:
-      TZ: "America/Mexico_City"
-      MONGO_INITDB_ROOT_USERNAME: "devuser"
-      MONGO_INITDB_ROOT_PASSWORD: "devpassword"
+      TZ: "${TZ}"
+      MONGO_INITDB_ROOT_USERNAME: "${MONGO_USERNAME}"
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_PASSWORD}"
     volumes:
       - ./mongodata:/data/db
     ports:
-      - 27017:27017
-
-
-    
+      - ${MONGO_EXT_PORT}:27017
 
   emqx:
     container_name: emqx
@@ -32,54 +28,49 @@ services:
     restart: always
     ports:
       - 18083:18083
-      - 18084:18084
       - 1883:1883
       - 8883:8883
       - 8083:8083
-      - 8084:8084
       - 8085:8081
 
-   # volumes:
-   #   - vol-emqx-data:/opt/emqx/data
-   #   - vol-emqx-etc:/opt/emqx/etc
-   #   - vol-emqx-log:/opt/emqx/log
-   # 
+    volumes:
+      - vol-emqx-data:/opt/emqx/data
+      #   - vol-emqx-etc:/opt/emqx/etc
+      - vol-emqx-log:/opt/emqx/log
 
     links:
       - mongo
 
-    extra_hosts: 
+    extra_hosts:
       - "localhost:192.168.1.68"
 
-
-    environment: 
-      
+    environment:
       EMQX_NAME: monitor-98
       EMQX_HOST: 127.0.0.1
 
-      TZ: "America/Mexico_City"
+      TZ: "${TZ}"
 
       # ___Default Dash Pass____
       EMQX_DASHBOARD__DEFAULT_USER__LOGIN: admin
-      EMQX_DASHBOARD__DEFAULT_USER__PASSWORD: "public"
+      EMQX_DASHBOARD__DEFAULT_USER__PASSWORD: "${EMQX_DEFAULT_USER_PASSWORD}"
 
       # ___Default App Secret____
-      EMQX_MANAGEMENT__DEFAULT_APPLICATION__SECRET: "public" 
+      EMQX_MANAGEMENT__DEFAULT_APPLICATION__SECRET: "${EMQX_DEFAULT_APPLICATION_SECRET}"
 
-      EMQX_ALLOW_ANONYMOUS: "false"     # Exige las credenciales para la coneccion con el socket
-      EMQX_NOMATCH: "deny"              # Control de los topicos para subscribe y publish
+      EMQX_ALLOW_ANONYMOUS: "false" # Exige las credenciales para la coneccion con el socket
+      EMQX_NOMATCH: "deny" # Control de los topicos para subscribe y publish
 
       # ____Mongo connection____
       EMQX_AUTH__MONGO__TYPE: single
       EMQX_AUTH__MONGO__TOPOLOGY__POOL_SIZE: 1
       EMQX_AUTH__MONGO__TOPOLOGY__MAX_OVERFLOW: 0
 
-      EMQX_AUTH__MONGO__SERVER: "mongo:27017"
+      EMQX_AUTH__MONGO__SERVER: "mongo:${MONGO_EXT_PORT}"
       EMQX_AUTH__MONGO__POOL: 8
 
       # ____Server credentials
-      EMQX_AUTH__MONGO__LOGIN: "devuser"
-      EMQX_AUTH__MONGO__PASSWORD: "devpassword"
+      EMQX_AUTH__MONGO__LOGIN: "${MONGO_USERNAME}"
+      EMQX_AUTH__MONGO__PASSWORD: "${MONGO_PASSWORD}"
       EMQX_AUTH__MONGO__AUTH_SOURCE: admin
 
       # ____Database for credentials____
@@ -105,6 +96,5 @@ services:
 
       # ____Loaded Plugins____
       EMQX_LOADED_PLUGINS: "emqx_recon,emqx_retainer,emqx_management,emqx_dashboard,emqx_auth_mongo"
-
 
       EMQX_LISTENER__TCP__EXTERNAL__MAX_CONNECTIONS: 1000
